@@ -1,16 +1,23 @@
-#include <node_api.h>
+// using "Hello World" referenced form https://www.npmjs.com/package/node-gyp
 
-napi_value Method(napi_env env, napi_callback_info info) {
-  napi_value greeting;
-  napi_create_string_utf8(env, "hello world", NAPI_AUTO_LENGTH, &greeting);
-  return greeting;
+// Include uv.h and v8.h ahead of node.h to verify that node.h doesn't need to
+// be included first. Disable clang-format as it will sort the include lists.
+// clang-format off
+#include <uv.h>
+#include <v8.h>
+#include <node.h>
+// clang-format on
+
+static void Method(const v8::FunctionCallbackInfo<v8::Value> &args) {
+  v8::Isolate *isolate = args.GetIsolate();
+  args.GetReturnValue().Set(
+      v8::String::NewFromUtf8(isolate, "world").ToLocalChecked());
 }
 
-// static void init(napi_env env, napi_value exports, napi_value module,
-static napi_value init(napi_env env, napi_value exports) {
-  napi_value new_exports;
-  napi_create_function(env, NULL, 0, Method, NULL, &new_exports);
-  napi_set_named_property(env, exports, "hello", new_exports);
+static void InitModule(v8::Local<v8::Object> exports,
+                       v8::Local<v8::Value> module,
+                       v8::Local<v8::Context> context) {
+  NODE_SET_METHOD(exports, "hello", Method);
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, init);
+NODE_MODULE(NODE_GYP_MODULE_NAME, InitModule)
